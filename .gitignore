@@ -48,3 +48,14 @@ ENV/
 screenshots/
 results/
 .claude/
+.history/
+# Backups do .env (contêm credenciais)
+.env.bak*
+PROMPT.md
+
+# Metadados do macOS em volumes externos
+._*
+.DS_Store
+
+# Script local para registrar experiment no LangSmith; não faz parte da entrega
+src/run_experiment.py
