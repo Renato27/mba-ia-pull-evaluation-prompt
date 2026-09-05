@@ -1,15 +1,3 @@
-"""
-Script para fazer push de prompts otimizados ao LangSmith Prompt Hub.
-
-Este script:
-1. Lê os prompts otimizados de prompts/bug_to_user_story_v2.yml
-2. Valida os prompts
-3. Faz push PÚBLICO para o LangSmith Hub
-4. Adiciona metadados (tags, descrição, técnicas utilizadas)
-
-SIMPLIFICADO: Código mais limpo e direto ao ponto.
-"""
-
 import os
 import sys
 from dotenv import load_dotenv
@@ -24,15 +12,6 @@ REQUIRED_ENV_VARS = ["LANGSMITH_API_KEY", "PROMPT_DIR", "PROMPT_NAME"]
 
 
 def validate_prompt(prompt_data: dict) -> tuple[bool, list]:
-    """
-    Valida estrutura básica de um prompt (versão simplificada).
-
-    Args:
-        prompt_data: Dados do prompt
-
-    Returns:
-        (is_valid, errors) - Tupla com status e lista de erros
-    """
     errors = []
 
     for field in REQUIRED_FIELDS:
@@ -57,15 +36,6 @@ def validate_prompt(prompt_data: dict) -> tuple[bool, list]:
 
 
 def build_prompt_template(prompt_data: dict) -> ChatPromptTemplate:
-    """
-    Monta o ChatPromptTemplate a partir dos textos do YAML.
-
-    Args:
-        prompt_data: Dados do prompt
-
-    Returns:
-        ChatPromptTemplate com as mensagens system e human
-    """
     return ChatPromptTemplate.from_messages([
         ("system", prompt_data["system_prompt"]),
         ("human", prompt_data["user_prompt"]),
@@ -73,35 +43,16 @@ def build_prompt_template(prompt_data: dict) -> ChatPromptTemplate:
 
 
 def build_tags(prompt_data: dict) -> list:
-    """
-    Monta a lista de tags do repositório, incluindo as técnicas aplicadas.
-
-    Args:
-        prompt_data: Dados do prompt
-
-    Returns:
-        Lista de tags sem duplicatas
-    """
     tags = list(prompt_data.get("tags", []))
     tags.append(prompt_data.get("version", ""))
 
     for technique in prompt_data.get("techniques_applied", []):
         tags.append(technique.lower().replace(" ", "-"))
 
-    # remove vazios e duplicatas preservando a ordem
     return list(dict.fromkeys(tag for tag in tags if tag))
 
 
 def build_readme(prompt_data: dict) -> str:
-    """
-    Monta o readme do repositório do prompt no Hub.
-
-    Args:
-        prompt_data: Dados do prompt
-
-    Returns:
-        Texto em markdown com metadados do prompt
-    """
     techniques = prompt_data.get("techniques_applied", [])
     linhas = [
         f"# {prompt_data.get('description', '')}",
@@ -123,19 +74,9 @@ def build_readme(prompt_data: dict) -> str:
 
 
 def push_prompt_to_langsmith(prompt_name: str, prompt_data: dict) -> bool:
-    """
-    Faz push do prompt otimizado para o LangSmith Hub (PÚBLICO).
-
-    Args:
-        prompt_name: Nome do prompt
-        prompt_data: Dados do prompt
-
-    Returns:
-        True se sucesso, False caso contrário
-    """
     is_valid, errors = validate_prompt(prompt_data)
     if not is_valid:
-        print(f"❌ Erros de validação para o prompt {prompt_name}:")
+        print(f"Erros de validação para o prompt {prompt_name}:")
         for error in errors:
             print(f"   - {error}")
         return False
@@ -143,7 +84,7 @@ def push_prompt_to_langsmith(prompt_name: str, prompt_data: dict) -> bool:
     try:
         prompt_template = build_prompt_template(prompt_data)
     except Exception as e:
-        print(f"❌ Erro ao criar o template do prompt {prompt_name}: {e}")
+        print(f"Erro ao criar o template do prompt {prompt_name}: {e}")
         return False
 
     try:
@@ -156,19 +97,17 @@ def push_prompt_to_langsmith(prompt_name: str, prompt_data: dict) -> bool:
             tags=build_tags(prompt_data),
             is_public=True,
         )
-        print(f"✅ Prompt '{prompt_name}' publicado com sucesso.")
-        print(f"   URL: {url}")
+        print(f"Prompt '{prompt_name}' publicado com sucesso.")
+        print(f"URL: {url}")
         return True
 
     except Exception as e:
-        # O Hub recusa um commit idêntico ao último. Não é falha: o conteúdo
-        # publicado já é o do YAML local.
         if "has not changed since latest commit" in str(e):
-            print(f"✅ Prompt '{prompt_name}' já está publicado nesta versão.")
-            print(f"   URL: {Client()._get_prompt_url(prompt_identifier=prompt_name)}")
+            print(f"Prompt '{prompt_name}' já está publicado nesta versão.")
+            print(f"URL: {Client()._get_prompt_url(prompt_identifier=prompt_name)}")
             return True
 
-        print(f"❌ Erro ao fazer push do prompt {prompt_name}: {e}")
+        print(f"Erro ao fazer push do prompt {prompt_name}: {e}")
 
         if "handle" in str(e).lower():
             print(
@@ -180,7 +119,6 @@ def push_prompt_to_langsmith(prompt_name: str, prompt_data: dict) -> bool:
 
 
 def main():
-    """Função principal"""
     print_section_header("PUSH DO PROMPT OTIMIZADO PARA O LANGSMITH HUB")
 
     if not check_env_vars(REQUIRED_ENV_VARS):
@@ -196,10 +134,10 @@ def main():
 
     prompt_data = prompt.get(prompt_name)
     if not prompt_data:
-        print(f"❌ Chave '{prompt_name}' não encontrada em {prompt_file}")
+        print(f"Chave '{prompt_name}' não encontrada em {prompt_file}")
         return 1
 
-    print(f"📤 Publicando: {prompt_name}")
+    print(f"Publicando: {prompt_name}")
     if not push_prompt_to_langsmith(prompt_name, prompt_data):
         return 1
 

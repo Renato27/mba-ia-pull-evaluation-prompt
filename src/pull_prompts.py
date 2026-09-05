@@ -1,14 +1,3 @@
-"""
-Script para fazer pull de prompts do LangSmith Prompt Hub.
-
-Este script:
-1. Conecta ao LangSmith usando credenciais do .env
-2. Faz pull dos prompts do Hub
-3. Salva localmente em prompts/bug_to_user_story_v1.yml
-
-SIMPLIFICADO: Usa serialização nativa do LangChain para extrair prompts.
-"""
-
 import os
 import re
 import sys
@@ -56,8 +45,7 @@ def fetch_prompt_metadata(prompt_source: str) -> dict:
         info = Client().get_prompt(prompt_source)
         description = info.description or ""
         tags = [tag for tag in (info.tags or []) if tag not in AUTO_TAGS]
-        # info.created_at é um datetime; normaliza para string YYYY-MM-DD, senão
-        # o YAML grava uma data nativa em vez de string.
+
         created_at = (
             info.created_at.date().isoformat() if info.created_at
             else date.today().isoformat()
