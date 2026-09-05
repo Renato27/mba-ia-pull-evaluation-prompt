@@ -16,14 +16,12 @@ PROMPT_KEY = "bug_to_user_story_v2"
 
 
 def load_prompts(file_path: str):
-    """Carrega prompts do arquivo YAML."""
     with open(file_path, 'r', encoding='utf-8') as f:
         return yaml.safe_load(f)
 
 
 @pytest.fixture(scope="module")
 def prompt_data():
-    """Dados do prompt otimizado v2."""
     prompts = load_prompts(PROMPT_FILE)
     assert PROMPT_KEY in prompts, (
         f"O arquivo {PROMPT_FILE.name} deve ter '{PROMPT_KEY}' como chave raiz"
@@ -33,7 +31,6 @@ def prompt_data():
 
 class TestPrompts:
     def test_prompt_has_system_prompt(self, prompt_data):
-        """Verifica se o campo 'system_prompt' existe e não está vazio."""
         assert "system_prompt" in prompt_data, "Campo 'system_prompt' não encontrado"
 
         system_prompt = prompt_data["system_prompt"]
@@ -45,7 +42,6 @@ class TestPrompts:
         )
 
     def test_prompt_has_role_definition(self, prompt_data):
-        """Verifica se o prompt define uma persona (ex: "Você é um Product Manager")."""
         system_prompt = prompt_data.get("system_prompt", "").lower()
 
         assert "você é" in system_prompt, (
@@ -59,10 +55,8 @@ class TestPrompts:
         )
 
     def test_prompt_mentions_format(self, prompt_data):
-        """Verifica se o prompt exige formato Markdown ou User Story padrão."""
         system_prompt = prompt_data.get("system_prompt", "").lower()
 
-        # Template padrão de user story: "Como um ..., eu quero ..., para que ..."
         for parte in ["como um", "eu quero", "para que"]:
             assert parte in system_prompt, (
                 f"O prompt deve exigir o template de user story; falta '{parte}'"
@@ -72,14 +66,12 @@ class TestPrompts:
             "O prompt deve exigir uma seção de critérios de aceitação"
         )
 
-        # Critérios em formato Gherkin (Given-When-Then)
         for palavra in ["dado que", "quando", "então"]:
             assert palavra in system_prompt, (
                 f"Os critérios devem seguir o formato Gherkin; falta '{palavra}'"
             )
 
     def test_prompt_has_few_shot_examples(self, prompt_data):
-        """Verifica se o prompt contém exemplos de entrada/saída (técnica Few-shot)."""
         system_prompt = prompt_data.get("system_prompt", "")
         lowered = system_prompt.lower()
 
@@ -97,7 +89,6 @@ class TestPrompts:
         )
 
     def test_prompt_no_todos(self, prompt_data):
-        """Garante que você não esqueceu nenhum `[TODO]` no texto."""
         marcadores = ["[TODO]", "TODO:", "FIXME", "XXX", "<preencher>", "[preencher]"]
 
         for campo in ["description", "system_prompt", "user_prompt"]:
@@ -107,12 +98,10 @@ class TestPrompts:
                     f"Marcador '{marcador}' encontrado em '{campo}'"
                 )
 
-        # validate_prompt_structure também checa TODOs, campos obrigatórios e técnicas
         is_valid, errors = validate_prompt_structure(prompt_data)
         assert is_valid, f"Estrutura inválida: {errors}"
 
     def test_minimum_techniques(self, prompt_data):
-        """Verifica (através dos metadados do yaml) se pelo menos 2 técnicas foram listadas."""
         assert "techniques_applied" in prompt_data, (
             "Metadado 'techniques_applied' não encontrado no YAML"
         )
@@ -126,7 +115,6 @@ class TestPrompts:
             "Cada técnica deve ser uma string não vazia"
         )
 
-        # Few-shot Learning é obrigatória no desafio
         assert any("few-shot" in t.lower() for t in tecnicas), (
             f"Few-shot Learning é obrigatória. Técnicas listadas: {tecnicas}"
         )
